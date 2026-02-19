@@ -1,6 +1,6 @@
 {
   "name": "@sudobility/starter_client",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Client library for Starter API with TanStack Query hooks",
   "type": "module",
   "main": "dist/index.js",

@@ -83,11 +83,11 @@ describe('StarterClient', () => {
       await client.createHistory('user-123', data, 'token-abc');
       expect(mockNetworkClient.post).toHaveBeenCalledWith(
         'https://api.example.com/api/v1/users/user-123/histories',
+        data,
         expect.objectContaining({
           headers: expect.objectContaining({
             Authorization: 'Bearer token-abc',
           }),
-          body: JSON.stringify(data),
         })
       );
     });
@@ -99,11 +99,11 @@ describe('StarterClient', () => {
       await client.updateHistory('user-123', 'hist-456', data, 'token-abc');
       expect(mockNetworkClient.put).toHaveBeenCalledWith(
         'https://api.example.com/api/v1/users/user-123/histories/hist-456',
+        data,
         expect.objectContaining({
           headers: expect.objectContaining({
             Authorization: 'Bearer token-abc',
           }),
-          body: JSON.stringify(data),
         })
       );
     });

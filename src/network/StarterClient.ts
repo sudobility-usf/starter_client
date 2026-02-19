@@ -55,9 +55,8 @@ export class StarterClient {
     token: FirebaseIdToken
   ): Promise<BaseResponse<History>> {
     const url = buildUrl(this.baseUrl, `/api/v1/users/${userId}/histories`);
-    const response = await this.networkClient.post(url, {
+    const response = await this.networkClient.post(url, data, {
       headers: createAuthHeaders(token),
-      body: JSON.stringify(data),
     });
     return response.data as BaseResponse<History>;
   }
@@ -72,9 +71,8 @@ export class StarterClient {
       this.baseUrl,
       `/api/v1/users/${userId}/histories/${historyId}`
     );
-    const response = await this.networkClient.put(url, {
+    const response = await this.networkClient.put(url, data, {
       headers: createAuthHeaders(token),
-      body: JSON.stringify(data),
     });
     return response.data as BaseResponse<History>;
   }
