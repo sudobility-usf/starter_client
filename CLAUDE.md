@@ -1,0 +1,107 @@
+# Starter Client
+
+API client SDK for Starter with TanStack Query hooks.
+
+**npm**: `@sudobility/starter_client` (public, BUSL-1.1)
+
+## Tech Stack
+
+- **Language**: TypeScript (strict mode)
+- **Runtime**: Bun
+- **Package Manager**: Bun (do not use npm/yarn/pnpm for installing dependencies)
+- **Build**: TypeScript compiler (ESM)
+- **Test**: Vitest
+- **Data Fetching**: TanStack Query 5
+
+## Project Structure
+
+```
+src/
+├── index.ts                          # Main exports
+├── types.ts                          # QUERY_KEYS factory, config types
+├── network/
+│   ├── StarterClient.ts              # HTTP client class (DI-based)
+│   └── StarterClient.test.ts
+├── hooks/
+│   ├── index.ts                      # Hook exports
+│   ├── useHistories.ts               # Query hook for user histories
+│   ├── useHistoriesTotal.ts          # Query hook for global total
+│   └── useHistoryMutations.ts        # Create/update/delete with auto-invalidation
+└── utils/
+    ├── index.ts                      # Utility exports
+    └── starter-helpers.ts            # createAuthHeaders, buildUrl, handleApiError
+```
+
+## Commands
+
+```bash
+bun run build          # Build ESM
+bun run clean          # Remove dist/
+bun test               # Run tests
+bun run typecheck      # TypeScript check
+bun run lint           # Run ESLint
+bun run verify         # All checks + build (use before commit)
+bun run prepublishOnly # Clean + build (runs on publish)
+```
+
+## Key Concepts
+
+### StarterClient
+
+HTTP client class constructed with `{ baseUrl, networkClient }`. Uses dependency injection via the `NetworkClient` interface from `@sudobility/types` — no direct fetch calls.
+
+### Hooks
+
+- `useHistories(config)` — fetches user history list
+- `useHistoriesTotal(config)` — fetches global total (public endpoint)
+- `useHistoryMutations(config)` — returns `createHistory`, `updateHistory`, `deleteHistory` with automatic query invalidation
+
+### QUERY_KEYS
+
+Type-safe cache key factory for TanStack Query. Used internally by hooks and available for manual invalidation.
+
+### Cache Settings
+
+- `staleTime`: 5 minutes
+- `gcTime`: 30 minutes
+
+## Peer Dependencies
+
+- `react` (>=18)
+- `@tanstack/react-query` (>=5)
+- `@sudobility/types` — NetworkClient interface, BaseResponse
+
+## Related Projects
+
+- **starter_types** — Shared type definitions; this project imports all API types (`History`, request/response types, `BaseResponse`)
+- **starter_api** — Backend server that this client SDK communicates with over HTTP
+- **starter_lib** — Business logic library that consumes this client's hooks and `StarterClient` class
+- **starter_app** — Web frontend that uses this client transitively via starter_lib
+- **starter_app_rn** — React Native app that uses this client via file: links
+
+Dependency injection is central: `NetworkClient` interface is provided by the consumer, allowing different fetch implementations per platform (web vs React Native).
+
+## Coding Patterns
+
+- `QUERY_KEYS` factory in `src/types.ts` provides type-safe cache keys for TanStack Query -- always use it for query keys
+- `StarterClient` class accepts `{ baseUrl, networkClient }` via constructor -- never use `fetch` directly inside this package
+- Hooks (`useHistories`, `useHistoriesTotal`, `useHistoryMutations`) wrap TanStack Query and use `StarterClient` internally
+- Mutation hooks automatically invalidate related queries after success (e.g., create/update/delete invalidate the histories list)
+- Default `staleTime` is 5 minutes and `gcTime` is 30 minutes -- respect these defaults unless there is a specific reason to override
+- Utility functions in `src/utils/starter-helpers.ts` handle auth headers (`createAuthHeaders`), URL construction (`buildUrl`), and API error handling (`handleApiError`)
+- `FirebaseIdToken` must be passed to all protected endpoint calls for authentication
+
+## Gotchas
+
+- `NetworkClient` is dependency-injected -- never import or use `fetch` directly; all HTTP calls go through the injected `networkClient`
+- Mutations auto-invalidate related queries -- adding a new mutation must include proper `onSuccess` invalidation to keep caches consistent
+- `FirebaseIdToken` is required for all authenticated endpoints; omitting it will result in 401/403 errors from the API
+- The `QUERY_KEYS` factory must be kept in sync with API route changes -- if a route path changes, update the corresponding key
+- This is a published npm package (`@sudobility/starter_client`) -- breaking changes require version bumps and coordination with consumers
+
+## Testing
+
+- Run tests: `bun test`
+- Tests are in files alongside source (e.g., `StarterClient.test.ts`)
+- Tests cover `StarterClient` HTTP methods and hook behavior
+- Uses Vitest as the test runner
