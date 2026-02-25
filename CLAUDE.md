@@ -24,9 +24,8 @@ src/
 │   └── StarterClient.test.ts
 ├── hooks/
 │   ├── index.ts                      # Hook exports
-│   ├── useHistories.ts               # Query hook for user histories
-│   ├── useHistoriesTotal.ts          # Query hook for global total
-│   └── useHistoryMutations.ts        # Create/update/delete with auto-invalidation
+│   ├── useHistories.ts               # Query + mutation hook for user histories
+│   └── useHistoriesTotal.ts          # Query hook for global total
 └── utils/
     ├── index.ts                      # Utility exports
     └── starter-helpers.ts            # createAuthHeaders, buildUrl, handleApiError
@@ -52,9 +51,8 @@ HTTP client class constructed with `{ baseUrl, networkClient }`. Uses dependency
 
 ### Hooks
 
-- `useHistories(config)` — fetches user history list
+- `useHistories(config)` — fetches user history list and provides `createHistory`, `updateHistory`, `deleteHistory` mutations with automatic query invalidation
 - `useHistoriesTotal(config)` — fetches global total (public endpoint)
-- `useHistoryMutations(config)` — returns `createHistory`, `updateHistory`, `deleteHistory` with automatic query invalidation
 
 ### QUERY_KEYS
 
@@ -85,8 +83,8 @@ Dependency injection is central: `NetworkClient` interface is provided by the co
 
 - `QUERY_KEYS` factory in `src/types.ts` provides type-safe cache keys for TanStack Query -- always use it for query keys
 - `StarterClient` class accepts `{ baseUrl, networkClient }` via constructor -- never use `fetch` directly inside this package
-- Hooks (`useHistories`, `useHistoriesTotal`, `useHistoryMutations`) wrap TanStack Query and use `StarterClient` internally
-- Mutation hooks automatically invalidate related queries after success (e.g., create/update/delete invalidate the histories list)
+- Hooks (`useHistories`, `useHistoriesTotal`) wrap TanStack Query and use `StarterClient` internally
+- `useHistories` combines query and mutations in a single hook — mutations automatically invalidate related queries after success
 - Default `staleTime` is 5 minutes and `gcTime` is 30 minutes -- respect these defaults unless there is a specific reason to override
 - Utility functions in `src/utils/starter-helpers.ts` handle auth headers (`createAuthHeaders`), URL construction (`buildUrl`), and API error handling (`handleApiError`)
 - `FirebaseIdToken` must be passed to all protected endpoint calls for authentication

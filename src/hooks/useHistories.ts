@@ -1,7 +1,10 @@
-import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useCallback, useMemo } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
+  BaseResponse,
   History,
+  HistoryCreateRequest,
+  HistoryUpdateRequest,
   NetworkClient,
   Optional,
 } from '@sudobility/starter_types';
@@ -19,16 +22,52 @@ export interface UseHistoriesReturn {
   histories: History[];
   /** Whether the query is currently loading. */
   isLoading: boolean;
-  /** An error message if the query failed, or `null` if no error. */
+  /** An error message if the query or any mutation failed, or `null` if no error. */
   error: Optional<string>;
-  /** Function to manually trigger a refetch of the histories. */
-  refetch: () => void;
+  /** Function to manually trigger an update of the histories. */
+  update: () => void;
+  /**
+   * Creates a new history entry.
+   *
+   * @param data - The history data to create
+   * @returns The created history wrapped in a {@link BaseResponse}
+   */
+  createHistory: (data: HistoryCreateRequest) => Promise<BaseResponse<History>>;
+  /**
+   * Updates an existing history entry.
+   *
+   * @param historyId - The ID of the history to update
+   * @param data - The fields to update
+   * @returns The updated history wrapped in a {@link BaseResponse}
+   */
+  updateHistory: (
+    historyId: string,
+    data: HistoryUpdateRequest
+  ) => Promise<BaseResponse<History>>;
+  /**
+   * Deletes a history entry.
+   *
+   * @param historyId - The ID of the history to delete
+   * @returns A void response wrapped in a {@link BaseResponse}
+   */
+  deleteHistory: (historyId: string) => Promise<BaseResponse<void>>;
+  /** Whether a create mutation is currently in progress. */
+  isCreating: boolean;
+  /** Whether an update mutation is currently in progress. */
+  isUpdating: boolean;
+  /** Whether a delete mutation is currently in progress. */
+  isDeleting: boolean;
+  /** Resets all mutation error states. */
+  clearError: () => void;
 }
 
 /**
- * TanStack Query hook that fetches a user's history list.
+ * TanStack Query hook that fetches a user's history list and provides
+ * mutation functions for creating, updating, and deleting history entries.
  *
- * Automatically manages caching, background refetching, and error state.
+ * Automatically manages caching, background refetching, error state, and
+ * query invalidation after successful mutations.
+ *
  * The query is disabled when `userId` or `token` is `null`, or when
  * `options.enabled` is `false`.
  *
@@ -38,14 +77,14 @@ export interface UseHistoriesReturn {
  * @param token - A valid Firebase ID token, or `null` if not authenticated
  * @param options - Optional configuration
  * @param options.enabled - Whether the query should execute (default: `true`)
- * @returns An object containing histories data, loading state, error, and refetch function
+ * @returns An object containing histories data, loading state, error, update, and mutation functions
  *
  * @example
  * ```typescript
  * import { useHistories } from '@sudobility/starter_client';
  *
  * function HistoryList() {
- *   const { histories, isLoading, error } = useHistories(
+ *   const { histories, isLoading, error, createHistory } = useHistories(
  *     networkClient,
  *     'https://api.example.com',
  *     userId,
@@ -72,6 +111,8 @@ export const useHistories = (
     [baseUrl, networkClient]
   );
 
+  const queryClient = useQueryClient();
+
   const {
     data,
     isLoading,
@@ -91,15 +132,107 @@ export const useHistories = (
     gcTime: DEFAULT_GC_TIME,
   });
 
-  const error = queryError instanceof Error ? queryError.message : null;
+  const invalidate = useCallback(() => {
+    if (userId) {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.histories(userId),
+      });
+    }
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.historiesTotal(),
+    });
+  }, [queryClient, userId]);
+
+  const createMutation = useMutation({
+    mutationFn: async (data: HistoryCreateRequest) => {
+      return client.createHistory(userId!, data, token!);
+    },
+    onSuccess: response => {
+      if (response.success) invalidate();
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({
+      historyId,
+      data,
+    }: {
+      historyId: string;
+      data: HistoryUpdateRequest;
+    }) => {
+      return client.updateHistory(userId!, historyId, data, token!);
+    },
+    onSuccess: response => {
+      if (response.success) invalidate();
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (historyId: string) => {
+      return client.deleteHistory(userId!, historyId, token!);
+    },
+    onSuccess: response => {
+      if (response.success) invalidate();
+    },
+  });
+
+  const createHistory = useCallback(
+    (data: HistoryCreateRequest) => createMutation.mutateAsync(data),
+    [createMutation]
+  );
+
+  const updateHistory = useCallback(
+    (historyId: string, data: HistoryUpdateRequest) =>
+      updateMutation.mutateAsync({ historyId, data }),
+    [updateMutation]
+  );
+
+  const deleteHistory = useCallback(
+    (historyId: string) => deleteMutation.mutateAsync(historyId),
+    [deleteMutation]
+  );
+
+  const mutationError =
+    createMutation.error ?? updateMutation.error ?? deleteMutation.error;
+
+  const queryErrorMessage =
+    queryError instanceof Error ? queryError.message : null;
+  const mutationErrorMessage =
+    mutationError instanceof Error ? mutationError.message : null;
+  const error = queryErrorMessage ?? mutationErrorMessage;
+
+  const clearError = useCallback(() => {
+    createMutation.reset();
+    updateMutation.reset();
+    deleteMutation.reset();
+  }, [createMutation, updateMutation, deleteMutation]);
 
   return useMemo(
     () => ({
       histories: data ?? EMPTY_HISTORIES,
       isLoading,
       error,
-      refetch,
+      update: refetch,
+      createHistory,
+      updateHistory,
+      deleteHistory,
+      isCreating: createMutation.isPending,
+      isUpdating: updateMutation.isPending,
+      isDeleting: deleteMutation.isPending,
+      clearError,
     }),
-    [data, isLoading, error, refetch]
+    [
+      data,
+      isLoading,
+      error,
+      refetch,
+      createHistory,
+      updateHistory,
+      deleteHistory,
+      createMutation.isPending,
+      updateMutation.isPending,
+      deleteMutation.isPending,
+      clearError,
+    ]
   );
 };
