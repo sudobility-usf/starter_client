@@ -36,7 +36,7 @@ src/
 ```bash
 bun run build          # Build ESM
 bun run clean          # Remove dist/
-bun test               # Run tests
+bun test               # Run Vitest tests (colocated *.test.ts files)
 bun run typecheck      # TypeScript check
 bun run lint           # Run ESLint
 bun run verify         # All checks + build (use before commit)
@@ -96,10 +96,3 @@ Dependency injection is central: `NetworkClient` interface is provided by the co
 - `FirebaseIdToken` is required for all authenticated endpoints; omitting it will result in 401/403 errors from the API
 - The `QUERY_KEYS` factory must be kept in sync with API route changes -- if a route path changes, update the corresponding key
 - This is a published npm package (`@sudobility/starter_client`) -- breaking changes require version bumps and coordination with consumers
-
-## Testing
-
-- Run tests: `bun test`
-- Tests are in files alongside source (e.g., `StarterClient.test.ts`)
-- Tests cover `StarterClient` HTTP methods and hook behavior
-- Uses Vitest as the test runner
