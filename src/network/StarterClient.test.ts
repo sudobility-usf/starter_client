@@ -3,7 +3,11 @@ import { StarterClient } from './StarterClient';
 import type { NetworkClient } from '@sudobility/types';
 
 function createMockNetworkClient(
-  responseData: unknown = { success: true, data: null, timestamp: '2024-01-01T00:00:00Z' }
+  responseData: unknown = {
+    success: true,
+    data: null,
+    timestamp: '2024-01-01T00:00:00Z',
+  }
 ): NetworkClient {
   const mockResponse = { data: responseData };
   return {

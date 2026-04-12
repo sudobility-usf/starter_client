@@ -208,7 +208,7 @@ export class StarterClient {
    * @param userId - The Firebase UID of the user
    * @param historyId - The ID of the history to delete
    * @param token - A valid Firebase ID token for authentication
-   * @returns A void response wrapped in a {@link BaseResponse}
+   * @returns A null response wrapped in a {@link BaseResponse}
    * @throws {Error} If the response does not match the expected shape
    *
    * @example
@@ -223,7 +223,7 @@ export class StarterClient {
     userId: string,
     historyId: string,
     token: FirebaseIdToken
-  ): Promise<BaseResponse<void>> {
+  ): Promise<BaseResponse<null>> {
     const url = buildUrl(
       this.baseUrl,
       `/api/v1/users/${userId}/histories/${historyId}`
@@ -231,7 +231,7 @@ export class StarterClient {
     const response = await this.networkClient.delete(url, {
       headers: createAuthHeaders(token),
     });
-    return validateResponse<void>(response.data, 'deleteHistory');
+    return validateResponse<null>(response.data, 'deleteHistory');
   }
 
   // --- Total (public) ---

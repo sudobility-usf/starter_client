@@ -48,9 +48,9 @@ export interface UseHistoriesReturn {
    * Deletes a history entry.
    *
    * @param historyId - The ID of the history to delete
-   * @returns A void response wrapped in a {@link BaseResponse}
+   * @returns A null response wrapped in a {@link BaseResponse}
    */
-  deleteHistory: (historyId: string) => Promise<BaseResponse<void>>;
+  deleteHistory: (historyId: string) => Promise<BaseResponse<null>>;
   /** Whether a create mutation is currently in progress. */
   isCreating: boolean;
   /** Whether an update mutation is currently in progress. */
