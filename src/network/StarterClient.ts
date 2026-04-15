@@ -102,11 +102,13 @@ export class StarterClient {
    */
   async getUser(
     userId: string,
-    token: FirebaseIdToken
+    token: FirebaseIdToken,
+    options?: { timeout?: number }
   ): Promise<BaseResponse<User>> {
     const url = buildUrl(this.baseUrl, `/api/v1/users/${userId}`);
     const response = await this.networkClient.get(url, {
       headers: createAuthHeaders(token),
+      timeout: options?.timeout,
     });
     return validateResponse<User>(response.data, 'getUser');
   }
@@ -131,11 +133,13 @@ export class StarterClient {
    */
   async getHistories(
     userId: string,
-    token: FirebaseIdToken
+    token: FirebaseIdToken,
+    options?: { timeout?: number }
   ): Promise<BaseResponse<History[]>> {
     const url = buildUrl(this.baseUrl, `/api/v1/users/${userId}/histories`);
     const response = await this.networkClient.get(url, {
       headers: createAuthHeaders(token),
+      timeout: options?.timeout,
     });
     return validateResponse<History[]>(response.data, 'getHistories');
   }
@@ -160,11 +164,13 @@ export class StarterClient {
   async createHistory(
     userId: string,
     data: HistoryCreateRequest,
-    token: FirebaseIdToken
+    token: FirebaseIdToken,
+    options?: { timeout?: number }
   ): Promise<BaseResponse<History>> {
     const url = buildUrl(this.baseUrl, `/api/v1/users/${userId}/histories`);
     const response = await this.networkClient.post(url, data, {
       headers: createAuthHeaders(token),
+      timeout: options?.timeout,
     });
     return validateResponse<History>(response.data, 'createHistory');
   }
@@ -190,7 +196,8 @@ export class StarterClient {
     userId: string,
     historyId: string,
     data: HistoryUpdateRequest,
-    token: FirebaseIdToken
+    token: FirebaseIdToken,
+    options?: { timeout?: number }
   ): Promise<BaseResponse<History>> {
     const url = buildUrl(
       this.baseUrl,
@@ -198,6 +205,7 @@ export class StarterClient {
     );
     const response = await this.networkClient.put(url, data, {
       headers: createAuthHeaders(token),
+      timeout: options?.timeout,
     });
     return validateResponse<History>(response.data, 'updateHistory');
   }
@@ -222,7 +230,8 @@ export class StarterClient {
   async deleteHistory(
     userId: string,
     historyId: string,
-    token: FirebaseIdToken
+    token: FirebaseIdToken,
+    options?: { timeout?: number }
   ): Promise<BaseResponse<null>> {
     const url = buildUrl(
       this.baseUrl,
@@ -230,6 +239,7 @@ export class StarterClient {
     );
     const response = await this.networkClient.delete(url, {
       headers: createAuthHeaders(token),
+      timeout: options?.timeout,
     });
     return validateResponse<null>(response.data, 'deleteHistory');
   }
@@ -252,10 +262,13 @@ export class StarterClient {
    * }
    * ```
    */
-  async getHistoriesTotal(): Promise<BaseResponse<HistoryTotalResponse>> {
+  async getHistoriesTotal(options?: {
+    timeout?: number;
+  }): Promise<BaseResponse<HistoryTotalResponse>> {
     const url = buildUrl(this.baseUrl, '/api/v1/histories/total');
     const response = await this.networkClient.get(url, {
       headers: createHeaders(),
+      timeout: options?.timeout,
     });
     return validateResponse<HistoryTotalResponse>(
       response.data,
