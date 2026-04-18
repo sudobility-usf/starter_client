@@ -20,6 +20,7 @@ src/
 ├── index.ts                          # Main exports
 ├── types.ts                          # QUERY_KEYS factory, config types
 ├── network/
+│   ├── index.ts                      # Network exports
 │   ├── StarterClient.ts              # HTTP client class (DI-based)
 │   └── StarterClient.test.ts
 ├── hooks/
@@ -51,8 +52,10 @@ HTTP client class constructed with `{ baseUrl, networkClient }`. Uses dependency
 
 ### Hooks
 
-- `useHistories(config)` — fetches user history list and provides `createHistory`, `updateHistory`, `deleteHistory` mutations with automatic query invalidation
-- `useHistoriesTotal(config)` — fetches global total (public endpoint)
+Hooks receive `networkClient` and `baseUrl` as the first two parameters (parameter-based DI). Each hook creates a memoized `StarterClient` instance internally via `useMemo`.
+
+- `useHistories(networkClient, baseUrl, userId, token, options?)` — fetches user history list and provides `createHistory`, `updateHistory`, `deleteHistory` mutations with automatic query invalidation
+- `useHistoriesTotal(networkClient, baseUrl, options?)` — fetches global total (public endpoint)
 
 ### QUERY_KEYS
 
@@ -83,7 +86,7 @@ Dependency injection is central: `NetworkClient` interface is provided by the co
 
 - `QUERY_KEYS` factory in `src/types.ts` provides type-safe cache keys for TanStack Query -- always use it for query keys
 - `StarterClient` class accepts `{ baseUrl, networkClient }` via constructor -- never use `fetch` directly inside this package
-- Hooks (`useHistories`, `useHistoriesTotal`) wrap TanStack Query and use `StarterClient` internally
+- Hooks receive `networkClient` and `baseUrl` as the first two parameters and create a memoized `StarterClient` internally -- no singleton pattern
 - `useHistories` combines query and mutations in a single hook — mutations automatically invalidate related queries after success
 - Default `staleTime` is 5 minutes and `gcTime` is 30 minutes -- respect these defaults unless there is a specific reason to override
 - Utility functions in `src/utils/starter-helpers.ts` handle auth headers (`createAuthHeaders`), URL construction (`buildUrl`), and API error handling (`handleApiError`)

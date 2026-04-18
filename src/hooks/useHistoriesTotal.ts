@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { Optional } from '@sudobility/starter_types';
-import { getStarterClient } from '../network/client-singleton';
+import type { NetworkClient } from '@sudobility/types';
+import { StarterClient } from '../network/StarterClient';
 import { DEFAULT_GC_TIME, DEFAULT_STALE_TIME, QUERY_KEYS } from '../types';
 
 /**
@@ -22,15 +23,25 @@ export interface UseHistoriesTotalReturn {
  * TanStack Query hook that fetches the global total count of all histories.
  *
  * This uses a public endpoint and does not require authentication.
- * Uses the StarterClient DI singleton (must be initialized at app startup).
  *
+ * @param networkClient - A {@link NetworkClient} implementation for making HTTP requests
+ * @param baseUrl - The base URL of the Starter API
  * @param options - Optional configuration
  * @param options.enabled - Whether the query should execute (default: `true`)
  * @returns An object containing the total count, loading state, error, and refetch function
  */
-export const useHistoriesTotal = (options?: {
-  enabled?: boolean;
-}): UseHistoriesTotalReturn => {
+export const useHistoriesTotal = (
+  networkClient: NetworkClient,
+  baseUrl: string,
+  options?: {
+    enabled?: boolean;
+  }
+): UseHistoriesTotalReturn => {
+  const client = useMemo(
+    () => new StarterClient({ baseUrl, networkClient }),
+    [baseUrl, networkClient]
+  );
+
   const enabled = options?.enabled ?? true;
 
   const {
@@ -41,7 +52,7 @@ export const useHistoriesTotal = (options?: {
   } = useQuery({
     queryKey: QUERY_KEYS.historiesTotal(),
     queryFn: async () => {
-      const response = await getStarterClient().getHistoriesTotal();
+      const response = await client.getHistoriesTotal();
       if (!response.success || !response.data) {
         throw new Error(response.error || 'Failed to fetch total');
       }
