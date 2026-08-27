@@ -1,5 +1,10 @@
 # Starter Client
 
+> **Git policy — never auto-commit or auto-push.** Leave your work in the working tree.
+> Run `git commit`, `git push`, `gh pr create`, or `scripts/push_all.sh` **only when the user
+> explicitly asks in that turn**. Approval for an earlier change does not carry forward, and
+> finishing a task is not permission to commit it.
+
 API client SDK for Starter with TanStack Query hooks.
 
 **npm**: `@sudobility/starter_client` (public, BUSL-1.1)
@@ -99,3 +104,7 @@ Dependency injection is central: `NetworkClient` interface is provided by the co
 - `FirebaseIdToken` is required for all authenticated endpoints; omitting it will result in 401/403 errors from the API
 - The `QUERY_KEYS` factory must be kept in sync with API route changes -- if a route path changes, update the corresponding key
 - This is a published npm package (`@sudobility/starter_client`) -- breaking changes require version bumps and coordination with consumers
+
+## Git Workflow
+
+- Do not use feature branches for code changes. Always stay on the current branch.
